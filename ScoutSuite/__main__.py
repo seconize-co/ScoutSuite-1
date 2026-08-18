@@ -1,5 +1,4 @@
 import asyncio
-import copy
 import os
 import webbrowser
 
@@ -18,6 +17,9 @@ from ScoutSuite.output.html import ScoutReport
 from ScoutSuite.output.utils import get_filename
 from ScoutSuite.providers import get_provider
 from ScoutSuite.providers.base.authentication_strategy_factory import get_authentication_strategy
+# Dirty workaround for compatibility with Python >= 3.10
+import collections
+collections.Callable = collections.abc.Callable
 
 
 def run_from_cli():
@@ -53,6 +55,16 @@ def run_from_cli():
                    organization_id=args.get('organization_id'), all_projects=args.get('all_projects'),
                    # Aliyun
                    access_key_id=args.get('access_key_id'), access_key_secret=args.get('access_key_secret'),
+                   # Kubernetes
+                   kubernetes_cluster_provider=args.get('kubernetes_cluster_provider'),
+                   kubernetes_config_file=args.get('kubernetes_config_file'),
+                   kubernetes_context=args.get('kubernetes_context'),
+                   kubernetes_persist_config=args.get('kubernetes_persist_config'),
+                   kubernetes_azure_subscription_id=args.get('kubernetes_azure_subscription_id'),
+                   #DigitalOcean
+                   token=args.get('token'),
+                   access_key=args.get('access_key'),
+                   access_secret=args.get('access_secret'),
                    # General
                    report_name=args.get('report_name'), report_dir=args.get('report_dir'),
                    timestamp=args.get('timestamp'),
@@ -99,6 +111,16 @@ def run(provider,
         project_id=None, folder_id=None, organization_id=None, all_projects=False,
         # Aliyun
         access_key_id=None, access_key_secret=None,
+        # Kubernetes
+        kubernetes_cluster_provider=None,
+        kubernetes_config_file=None,
+        kubernetes_context=None,
+        kubernetes_persist_config=True,
+        kubernetes_azure_subscription_id=None,
+        #DigitalOcean
+        token=None,
+        access_key=None,
+        access_secret=None,
         # General
         report_name=None, report_dir=None,
         timestamp=False,
@@ -151,6 +173,16 @@ async def _run(provider,
                project_id, folder_id, organization_id, all_projects,
                # Aliyun
                access_key_id, access_key_secret,
+               # Kubernetes
+               kubernetes_cluster_provider,
+               kubernetes_config_file,
+               kubernetes_context,
+               kubernetes_persist_config,
+               kubernetes_azure_subscription_id,
+               #DigitalOcean
+               token,
+               access_key,
+               access_secret,
                # General
                report_name, report_dir,
                timestamp,
@@ -199,7 +231,20 @@ async def _run(provider,
                                                  username=username,
                                                  password=password,
                                                  access_key_id=access_key_id,
-                                                 access_key_secret=access_key_secret)
+                                                 access_key_secret=access_key_secret,
+
+                                                #DigitalOcean
+                                                token=token,
+                                                access_key=access_key,
+                                                access_secret=access_secret,
+
+                                                 # Kubernetes
+                                                 kubernetes_cluster_provider=kubernetes_cluster_provider,
+                                                 kubernetes_config_file=kubernetes_config_file,
+                                                 kubernetes_context=kubernetes_context,
+                                                 kubernetes_persist_config=kubernetes_persist_config,
+                                                 kubernetes_azure_subscription_id=kubernetes_azure_subscription_id,
+                                                 kubernetes_fetch_local=fetch_local)
 
         if not credentials:
             return 101
@@ -220,6 +265,10 @@ async def _run(provider,
                                       folder_id=folder_id,
                                       organization_id=organization_id,
                                       all_projects=all_projects,
+                                      # Kubernetes
+                                      kubernetes_config_file=kubernetes_config_file,
+                                      kubernetes_context=kubernetes_context,
+                                      kubernetes_cluster_provider=kubernetes_cluster_provider,
                                       # Other
                                       report_dir=report_dir,
                                       timestamp=timestamp,
@@ -273,11 +322,14 @@ async def _run(provider,
         if update:
             try:
                 print_info('Updating existing data')
-                current_run_services = copy.deepcopy(cloud_provider.services)
+                #Load previous results
                 last_run_dict = report.encoder.load_from_file('RESULTS')
-                cloud_provider.services = last_run_dict['services']
-                for service in cloud_provider.service_list:
-                    cloud_provider.services[service] = current_run_services[service]
+                #Get list of previous services which were not updated during this run
+                previous_services = [prev_service for prev_service in last_run_dict['service_list'] if prev_service not in cloud_provider.service_list]
+                #Add previous services
+                for service in previous_services:
+                    cloud_provider.service_list.append(service)
+                    cloud_provider.services[service] = last_run_dict['services'][service]
             except Exception as e:
                 print_exception('Failure while updating report: {}'.format(e))
 

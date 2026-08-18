@@ -31,11 +31,9 @@ Handlebars.registerHelper('add_policy_path', function () {
     policy['policy_spath'] = path.replace(/\\/g, '')
 })
 
-Handlebars.registerHelper('displayKey', function (keyName, blob) {
-    var key = JSON.stringify(blob, null, 2)
-    key = key.replace(/ /g, '&nbsp;')
-    key = key.replace(/\n/g, '<br/>')
-    return key
+Handlebars.registerHelper('jsonToString', function (obj) {
+    // TODO: find a better way to address Handlebars-specific indentation weirdness in <pre>
+    return JSON.stringify(obj, null, 2).replace(/\r\n/g, `\r`).replace(/\n/g, `\r`)
 })
 
 Handlebars.registerHelper('has_profiles?', function (logins) {
@@ -317,6 +315,14 @@ Handlebars.registerHelper('concat', function () {
     var path = arguments[0]
     for (var i = 1; i < arguments.length - 1; i++) {
         path = path + '.' + arguments[i]
+    }
+    return path
+})
+
+Handlebars.registerHelper('append', function () {
+    var path = arguments[0]
+    for (var i = 1; i < arguments.length - 1; i++) {
+        path = path + arguments[i]
     }
     return path
 })

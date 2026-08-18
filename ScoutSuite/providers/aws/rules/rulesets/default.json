@@ -22,6 +22,24 @@
                 "level": "danger"
             }
         ],
+        "cloudfront-distribution-cleartext-origin.json": [
+            {
+                "enabled": true,
+                "level": "warning"
+            }
+        ],
+        "cloudfront-distribution-insecure-origin.json": [
+            {
+                "enabled": true,
+                "level": "warning"
+            }
+        ],
+        "cloudfront-distribution-insufficient-viewer-security.json": [
+            {
+                "enabled": true,
+                "level": "warning"
+            }
+        ],
         "cloudtrail-duplicated-global-services-logging.json": [
             {
                 "enabled": true,
@@ -70,6 +88,12 @@
                 "level": "danger"
             }
         ],
+        "cloudtrail-partial-data-logging.json": [
+            {
+                "enabled": true,
+                "level": "warning"
+            }
+        ],
         "cloudwatch-alarm-without-actions.json": [
             {
                 "enabled": true,
@@ -116,6 +140,12 @@
             {
                 "enabled": true,
                 "level": "danger"
+            }
+        ],
+        "ec2-ebs-default-encryption-disabled.json": [
+            {
+                "enabled": true,
+                "level": "warning"
             }
         ],
         "ec2-instance-in-security-group.json": [
@@ -549,6 +579,12 @@
                 "level": "danger"
             }
         ],
+        "iam-lightspin-user-action-denied-for-group.json": [
+            {
+                "enabled": true,
+                "level": "danger"
+            }
+        ],
         "iam-managed-policy-allows-NotActions.json": [
             {
                 "enabled": true,
@@ -883,6 +919,12 @@
                 "level": "danger"
             }
         ],
+        "rds-instance-publicly-accessible.json": [
+            {
+                "enabled": true,
+                "level": "danger"
+            }
+        ],
         "rds-instance-short-backup-retention-period.json": [
             {
                 "enabled": true,
@@ -1170,13 +1212,6 @@
             },
             {
                 "args": [
-                    "Receive"
-                ],
-                "enabled": true,
-                "level": "danger"
-            },
-            {
-                "args": [
                     "AddPermission"
                 ],
                 "enabled": true,
@@ -1191,7 +1226,21 @@
             },
             {
                 "args": [
+                    "GetTopicAttributes"
+                ],
+                "enabled": true,
+                "level": "danger"
+            },
+            {
+                "args": [
                     "SetTopicAttributes"
+                ],
+                "enabled": true,
+                "level": "danger"
+            },
+            {
+                "args": [
+                    "ListSubscriptionsByTopic"
                 ],
                 "enabled": true,
                 "level": "danger"
@@ -1202,6 +1251,12 @@
                 ],
                 "enabled": true,
                 "level": "danger"
+            }
+        ],
+        "sqs-queue-server-side-encryption-disabled.json": [
+            {
+                "enabled": true,
+                "level": "warning"
             }
         ],
         "sqs-queue-world-policy.json": [
