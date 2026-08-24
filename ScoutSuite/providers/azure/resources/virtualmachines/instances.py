@@ -3,7 +3,6 @@ from ScoutSuite.providers.azure.resources.base import AzureResources
 from ScoutSuite.providers.utils import get_non_provider_id
 from ScoutSuite.providers.azure.utils import get_resource_group_name
 
-from ScoutSuite.providers.azure.utils import get_resource_group_name
 
 class Instances(AzureResources):
 
@@ -44,7 +43,7 @@ class Instances(AzureResources):
         instance_dict['type'] = raw_instance.type
         instance_dict['resources'] = raw_instance.resources
         if raw_instance.tags is not None:
-            instance_dict['tags'] = ["{}:{}".format(key, value) for key, value in  raw_instance.tags.items()]
+            instance_dict['tags'] = ["{}:{}".format(key, value) for key, value in raw_instance.tags.items()]
         else:
             instance_dict['tags'] = []
         instance_dict['resource_group_name'] = get_resource_group_name(raw_instance.id)
@@ -64,7 +63,10 @@ class Instances(AzureResources):
 
         # TODO process and display the below
         instance_dict['hardware_profile'] = raw_instance.hardware_profile.vm_size
-        instance_dict['diagnostics_profile'] = {'Boot Diagnostics': True if raw_instance.diagnostics_profile.boot_diagnostics.enabled else None}
+        
+        # Handle VMs without diagnostics profile configured
+        if raw_instance.diagnostics_profile is not None:
+            instance_dict['diagnostics_profile'] = {'Boot Diagnostics': True if raw_instance.diagnostics_profile.boot_diagnostics.enabled else None}
         
         instance_dict['os_profile'] = {}
         if raw_instance.os_profile is not None:
@@ -84,7 +86,8 @@ class Instances(AzureResources):
 
         if raw_instance.storage_profile is not None:
             instance_dict['storage_profile'] = {}
-            instance_dict['storage_profile']['Publisher'] = raw_instance.storage_profile.image_reference.publisher
+            if raw_instance.storage_profile.image_reference is not None:
+                instance_dict['storage_profile']['Publisher'] = raw_instance.storage_profile.image_reference.publisher
             instance_dict['storage_profile']['Release'] = raw_instance.storage_profile.image_reference.version
             instance_dict['storage_profile']['SKU'] = raw_instance.storage_profile.image_reference.sku
             instance_dict['storage_profile']['Offer'] = raw_instance.storage_profile.image_reference.offer
@@ -92,8 +95,14 @@ class Instances(AzureResources):
             instance_dict['storage_profile']['OS Disk Size (GB)'] = raw_instance.storage_profile.os_disk.disk_size_gb
             instance_dict['storage_profile']['OS Disk Name'] = raw_instance.storage_profile.os_disk.name
             instance_dict['storage_profile']['OS Disk VHD'] = raw_instance.storage_profile.os_disk.vhd
-            instance_dict['storage_profile']['OS Managed Disk ID'] = raw_instance.storage_profile.os_disk.managed_disk.id.split('/')[-1]
-            instance_dict['storage_profile']['OS Managed Disk Storage Account Type'] = raw_instance.storage_profile.os_disk.managed_disk.storage_account_type
+            if raw_instance.storage_profile.os_disk.managed_disk:
+                instance_dict['storage_profile'][
+                    'OS Managed Disk ID'] = raw_instance.storage_profile.os_disk.managed_disk.id.split('/')[-1]
+                instance_dict['storage_profile'][
+                    'OS Managed Disk Storage Account Type'] = raw_instance.storage_profile.os_disk.managed_disk.storage_account_type
+            else:
+                instance_dict['storage_profile']['OS Managed Disk ID'] = None
+                instance_dict['storage_profile']['OS Managed Disk Storage Account Type'] = None
             if raw_instance.storage_profile.data_disks is not None and raw_instance.storage_profile.data_disks:
                 instance_dict['storage_profile']['Data Disks'] = ["{} ({}GB)".format(disk.name, disk.disk_size_gb) for disk in raw_instance.storage_profile.data_disks]
         else:
@@ -107,5 +116,7 @@ class Instances(AzureResources):
             subscription_id=self.subscription_id,
             instance_name=instance_dict['name'],
             resource_group=get_resource_group_name(raw_instance.id))
+
+        instance_dict['extension_names'] = [extension.name for extension in instance_dict['extensions']]
 
         return instance_dict['id'], instance_dict

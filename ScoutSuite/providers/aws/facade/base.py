@@ -7,6 +7,7 @@ from ScoutSuite.providers.aws.facade.cloudformation import CloudFormation
 from ScoutSuite.providers.aws.facade.cloudtrail import CloudTrailFacade
 from ScoutSuite.providers.aws.facade.cloudwatch import CloudWatch
 from ScoutSuite.providers.aws.facade.cloudfront import CloudFront
+from ScoutSuite.providers.aws.facade.codebuild import CodeBuild
 from ScoutSuite.providers.aws.facade.config import ConfigFacade
 from ScoutSuite.providers.aws.facade.directconnect import DirectConnectFacade
 from ScoutSuite.providers.aws.facade.dynamodb import DynamoDBFacade
@@ -26,7 +27,7 @@ from ScoutSuite.providers.aws.facade.ses import SESFacade
 from ScoutSuite.providers.aws.facade.sns import SNSFacade
 from ScoutSuite.providers.aws.facade.sqs import SQSFacade
 from ScoutSuite.providers.aws.facade.secretsmanager import SecretsManagerFacade
-from ScoutSuite.providers.aws.utils import get_aws_account_id
+from ScoutSuite.providers.aws.utils import get_aws_account_id, get_partition_name
 from ScoutSuite.providers.utils import run_concurrently
 
 from ScoutSuite.core.conditions import print_error
@@ -66,6 +67,7 @@ class AWSFacade(AWSBaseFacade):
     def __init__(self, credentials=None):
         super().__init__()
         self.owner_id = get_aws_account_id(credentials.session)
+        self.partition = get_partition_name(credentials.session)
         self.session = credentials.session
         self._instantiate_facades()
 
@@ -75,7 +77,7 @@ class AWSFacade(AWSBaseFacade):
         try:
             available_services = await run_concurrently(
                 lambda: Session(region_name='us-east-1').get_available_services())
-        except Exception as e:
+        except Exception:
             # see https://github.com/nccgroup/ScoutSuite/issues/548
             # If failed with the us-east-1 region, we'll try to use the region from the profile
             try:
@@ -122,7 +124,7 @@ class AWSFacade(AWSBaseFacade):
                     lambda: Session(region_name='us-east-1').get_available_regions("cognito-identity",
                                                                                    partition_name))
                 regions = [value for value in idp_regions if value in identity_regions]
-        except Exception as e:
+        except Exception:
             # see https://github.com/nccgroup/ScoutSuite/issues/548
             # If failed with the us-east-1 region, we'll try to use the region from the profile
             try:
@@ -198,15 +200,15 @@ class AWSFacade(AWSBaseFacade):
         try:
             ec2_not_opted_in_regions = self.session.client('ec2', 'us-east-1') \
                 .describe_regions(AllRegions=True, Filters=[{'Name': 'opt-in-status', 'Values': ['not-opted-in']}])
-        except Exception as e:
+        except Exception:
             # see https://github.com/nccgroup/ScoutSuite/issues/548
             # If failed with the us-east-1 region, we'll try to use the region from the profile
             try:
                 ec2_not_opted_in_regions = \
                     self.session.client('ec2', self.session.region_name). \
-                        describe_regions(AllRegions=True,
-                                         Filters=[{'Name': 'opt-in-status',
-                                                   'Values': ['not-opted-in']}])
+                    describe_regions(AllRegions=True,
+                                     Filters=[{'Name': 'opt-in-status',
+                                               'Values': ['not-opted-in']}])
             except Exception as e:
                 # see https://github.com/nccgroup/ScoutSuite/issues/685
                 # If above failed, and regions were explicitly specified, will try with those until
@@ -257,6 +259,7 @@ class AWSFacade(AWSBaseFacade):
         self.elasticache = ElastiCacheFacade(self.session)
         self.route53 = Route53Facade(self.session)
         self.cloudfront = CloudFront(self.session)
+        self.codebuild = CodeBuild(self.session)
         self.elb = ELBFacade(self.session)
         self.elbv2 = ELBv2Facade(self.session)
         self.iam = IAMFacade(self.session)

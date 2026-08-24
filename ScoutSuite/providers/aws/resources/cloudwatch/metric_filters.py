@@ -1,14 +1,14 @@
 from ScoutSuite.providers.aws.facade.base import AWSFacade
 from ScoutSuite.providers.aws.resources.base import AWSResources
 from ScoutSuite.providers.utils import get_non_provider_id
-from ScoutSuite.providers.aws.utils import get_partition_name, format_arn
+from ScoutSuite.providers.aws.utils import format_arn
 
 
 class MetricFilters(AWSResources):
     def __init__(self, facade: AWSFacade, region: str):
         super(MetricFilters, self).__init__(facade)
         self.region = region
-        self.partition = get_partition_name(facade.session)
+        self.partition = facade.partition
         self.service = 'cloudwatch'
         self.resource_type = 'metric-filter'
 
@@ -28,5 +28,3 @@ class MetricFilters(AWSResources):
         metric_filter_dict['log_group_name'] = raw_metric_filter.get('logGroupName')
         metric_filter_dict['arn'] = format_arn(self.partition, self.service, self.region, '', raw_metric_filter.get('filterName'), self.resource_type)
         return metric_filter_dict['id'], metric_filter_dict
-
-

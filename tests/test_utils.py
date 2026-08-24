@@ -17,6 +17,8 @@ import datetime
 #
 # Test methods for ScoutSuite/utils.py
 #
+
+
 class TestScoutUtilsClass(unittest.TestCase):
     def test_format_service_name(self):
         assert format_service_name("iAm") == "IAM"
@@ -41,7 +43,7 @@ class TestScoutUtilsClass(unittest.TestCase):
             e = CustomException(response={"Error": {"Code": t}})
             assert is_throttled(e)
         # test the non-throttling exception
-        e = CustomException(response={"Error": {"Code": "Not Throttling"}})
+        e = CustomException(response={"Error": {"Code": "Not Thro_ttling"}})
         assert not is_throttled(e)
         # test the except block
         e = CustomException(response={"Error": ""})

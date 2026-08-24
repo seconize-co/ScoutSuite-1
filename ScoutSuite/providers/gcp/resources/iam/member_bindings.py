@@ -31,7 +31,7 @@ class Bindings(Resources):
         return binding_dict['id'], binding_dict
 
     def _parse_members(self, raw_binding):
-        members_dict = {'users': [], 'groups': [], 'service_accounts': []}
+        members_dict = {'users': [], 'groups': [], 'service_accounts': [], 'domains': []}
         
         if 'members' not in raw_binding:
             return members_dict
@@ -39,18 +39,21 @@ class Bindings(Resources):
         type_map = { 
             'user': 'users', 
             'group': 'groups', 
-            'serviceAccount': 'service_accounts'
+            'serviceAccount': 'service_accounts',
+            'domain': 'domains'
         }
-        
+
         # We want to group the members by type, so we need to parse their type and entity.
         # The members are given as strings with the format <member_type>:<member_entity>
         # See the GCP Resource Manager API reference for more info:
-        # https://cloud.google.com/resource-manager/reference/rest/Shared.Types/Binding 
+        # https://cloud.google.com/resource-manager/reference/rest/Shared.Types/Binding
         for member in raw_binding['members']:
             member_type, entity = member.split(':')[:2]
             if member_type in type_map:
                 members_dict[type_map[member_type]].append(entity)
+            elif member_type == 'deleted':
+                pass
             else:
-                print_exception('Type %s not handled' % member_type)
+                print_exception(f'Type {member_type} not handled')
         
         return members_dict

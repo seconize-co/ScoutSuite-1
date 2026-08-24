@@ -1,6 +1,6 @@
 from ScoutSuite.providers.aws.facade.base import AWSFacade
 from ScoutSuite.providers.aws.resources.base import AWSResources
-from ScoutSuite.providers.aws.utils import get_name, get_partition_name, format_arn
+from ScoutSuite.providers.aws.utils import get_name, format_arn
 
 
 class FlowLogs(AWSResources):
@@ -8,7 +8,7 @@ class FlowLogs(AWSResources):
         super().__init__(facade)
         self.facade = facade
         self.region = region
-        self.partition = get_partition_name(facade.session)
+        self.partition = facade.partition
         self.service = 'vpc'
         self.resource_type = 'flow-log'
 
@@ -35,4 +35,3 @@ class FlowLogs(AWSResources):
         flow_log_dict['max_aggregation_interval'] = raw_flow_log.get('MaxAggregationInterval')
         flow_log_dict['arn'] = format_arn(self.partition, self.service, self.region, '', raw_flow_log.get('FlowLogId'), self.resource_type)
         return flow_log_dict['id'], flow_log_dict
-

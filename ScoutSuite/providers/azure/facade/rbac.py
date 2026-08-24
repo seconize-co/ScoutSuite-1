@@ -11,9 +11,9 @@ class RBACFacade:
         self.credentials = credentials
 
     def get_client(self, subscription_id: str):
-        client = AuthorizationManagementClient(self.credentials.get_credentials('arm'),
-                                             subscription_id=subscription_id)
-        client._client.config.add_user_agent(get_user_agent())
+        client = AuthorizationManagementClient(self.credentials.get_credentials(),
+                                               subscription_id=subscription_id,
+                                               user_agent=get_user_agent())
         return client
 
     async def get_roles(self, subscription_id: str):
@@ -28,7 +28,8 @@ class RBACFacade:
     async def get_role_assignments(self, subscription_id: str):
         try:
             client = self.get_client(subscription_id)
-            return await run_concurrently(lambda: list(client.role_assignments.list()))
+            scope = f'/subscriptions/{subscription_id}'
+            return await run_concurrently(lambda: list(client.role_assignments.list_for_scope(scope=scope)))
         except Exception as e:
             print_exception(f'Failed to retrieve role assignments: {e}')
             return []

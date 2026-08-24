@@ -154,7 +154,7 @@ class BaseProvider:
                 if service not in self.service_list:
                     continue
                 if 'hidden' in self.metadata[service_group][service] and \
-                        self.metadata[service_group][service]['hidden'] == True:
+                        self.metadata[service_group][service]['hidden']:
                     continue
                 if 'resources' not in self.metadata[service_group][service]:
                     continue
@@ -236,7 +236,7 @@ class BaseProvider:
                     if 'callbacks' in self.metadata[service_group][service]['resources'][resource_type]:
                         current_path = ['services', service]
                         target_path = self.metadata[service_group][service]['resources'][resource_type][
-                                          'path'].replace('.id', '').split('.')[2:]
+                            'path'].replace('.id', '').split('.')[2:]
                         callbacks = self.metadata[service_group][service]['resources'][resource_type][
                             'callbacks']
                         self._new_go_to_and_do(self.services[service],
@@ -248,8 +248,7 @@ class BaseProvider:
                     for summary in self.metadata[service_group][service]['summaries']:
                         if 'callbacks' in self.metadata[service_group][service]['summaries'][summary]:
                             current_path = ['services', service]
-                            for callback in self.metadata[service_group][service]['summaries'][summary][
-                                'callbacks']:
+                            for callback in self.metadata[service_group][service]['summaries'][summary]['callbacks']:
                                 callback_name = callback[0]
                                 callback_args = copy.deepcopy(callback[1])
                                 target_path = callback_args.pop('path').replace('.id', '').split('.')[2:]
@@ -283,7 +282,7 @@ class BaseProvider:
                                         source = get_object_at(self,
                                                                self.metadata[service_group][service]['summaries'][
                                                                    summary]['path'].split('.'))
-                                    except Exception as e:
+                                    except Exception:
                                         source = {}
                                     try:
                                         target_object.update(source)
@@ -326,7 +325,7 @@ class BaseProvider:
                             tmp.append(value)
                             self._go_to_and_do(current_config_key[value], copy.deepcopy(path), tmp, callback,
                                                callback_args)
-                        except:
+                        except Exception:
                             tmp.pop()
                             tmp.append(i)
                             self._go_to_and_do(current_config_key[i], copy.deepcopy(path), tmp, callback,
@@ -377,22 +376,21 @@ class BaseProvider:
                                 else:
                                     callback(current_config, path, current_path, value, callback_args)
                             except Exception as e:
-                                print_exception(e, {'callback': callback_name,
-                                                    'callback arguments': callback_args,
-                                                    'current path': f'{current_path}',
-                                                    'key': '{}'.format(key if 'key' in locals() else 'not defined'),
-                                                    'value': '{}'.format(
-                                                        value if 'value' in locals() else 'not defined'),
-                                                    'path': f'{path}',
-                                                    }
-                                                )
+                                print_exception(f'Error when calling callback {callback_name} with value {value}: {e}',
+                                                {'callback': callback_name,
+                                                 'callback arguments': callback_args,
+                                                 'current path': f'{current_path}',
+                                                 'key': '{}'.format(key if 'key' in locals() else 'not defined'),
+                                                 'value': '{}'.format(
+                                                     value if 'value' in locals() else 'not defined'),
+                                                 'path': f'{path}'})
                     else:
                         tmp = copy.deepcopy(current_path)
                         try:
                             tmp.append(value)
                             self._new_go_to_and_do(current_config[key][value], copy.deepcopy(path), tmp,
                                                    callbacks)
-                        except:
+                        except Exception:
                             tmp.pop()
                             tmp.append(i)
                             self._new_go_to_and_do(current_config[key][i], copy.deepcopy(path), tmp, callbacks)

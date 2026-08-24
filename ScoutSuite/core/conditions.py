@@ -3,6 +3,7 @@ import dateutil.parser
 import json
 import netaddr
 import re
+import ipaddress
 
 from policyuniverse.expander_minimizer import get_actions_from_statement, _expand_wildcard_action
 
@@ -114,9 +115,13 @@ def pass_condition(b, test, a):
 
     # Dictionary keys tests
     elif test == 'withKey':
-        result = (a in b)
+        result = a in b
     elif test == 'withoutKey':
         result = a not in b
+    elif test == 'withKeyCaseInsensitive':
+        result = a.lower() in map(str.lower, b)
+    elif test == 'withoutKeyCaseInsensitive':
+        result = a.lower() not in map(str.lower, b)
 
     # String test
     elif test == 'containString':
@@ -181,6 +186,18 @@ def pass_condition(b, test, a):
             if re.match(c, b):
                 result = True
                 break
+    elif test == 'matchInList':
+        if type(a) != list:
+            a = [a]
+        if type(b) !=list:
+            b = [b]
+        for c in a:
+            for d in b:
+                if re.match(c, d):
+                    result = True
+                    break
+            if result:
+                break
     elif test == 'notMatch':
         result = (not pass_condition(b, 'match', a))
 
@@ -209,6 +226,12 @@ def pass_condition(b, test, a):
                 break
     elif test == 'notInSubnets':
         result = (not pass_condition(b, 'inSubnets', a))
+    elif test == 'isSubnetRange':
+        result = not ipaddress.ip_network(b, strict=False).exploded.endswith("/32")
+    elif test == 'isPrivateSubnet':
+        result = ipaddress.ip_network(b, strict=False).is_private
+    elif test == 'isPublicSubnet':
+        result = not ipaddress.ip_network(b, strict=False).is_private
 
     # Port/port ranges tests
     elif test == 'portsInPortList':
@@ -227,7 +250,7 @@ def pass_condition(b, test, a):
                     if bottom_limit_port <= port <= upper_limit_port:
                         result = True
                         break
-            else: #A single port
+            else:  # A single port
                 for port in a:
                     if port == port_range:
                         result = True

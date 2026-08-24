@@ -10,6 +10,9 @@ from ScoutSuite.providers.azure.resources.storageaccounts.base import StorageAcc
 from ScoutSuite.providers.azure.resources.virtualmachines.base import VirtualMachines
 from ScoutSuite.providers.base.services import BaseServicesConfig
 from ScoutSuite.providers.azure.resources.appservice.base import AppServices
+from ScoutSuite.providers.azure.resources.mysqldatabase.base import MySQLServers
+from ScoutSuite.providers.azure.resources.postgresqldatabase.base import PostgreSQLServers
+from ScoutSuite.providers.azure.resources.loggingmonitoring.base import LoggingMonitoring
 
 # Try to import proprietary services
 try:
@@ -49,19 +52,22 @@ class AzureServicesConfig(BaseServicesConfig):
         self.network = Networks(facade)
         self.virtualmachines = VirtualMachines(facade)
         self.appservice = AppServices(facade)
+        self.mysqldatabase = MySQLServers(facade)
+        self.postgresqldatabase = PostgreSQLServers(facade)
+        self.loggingmonitoring = LoggingMonitoring(facade)
 
         # Instantiate proprietary services
         try:
             self.appgateway = ApplicationGateways(facade)
-        except NameError as _:
+        except NameError:
             pass
         try:
             self.loadbalancer = LoadBalancers(facade)
-        except NameError as _:
+        except NameError:
             pass
         try:
             self.rediscache = RedisCaches(facade)
-        except NameError as _:
+        except NameError:
             pass
 
     def _is_provider(self, provider_name):

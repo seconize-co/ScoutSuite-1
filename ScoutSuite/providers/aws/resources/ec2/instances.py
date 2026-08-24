@@ -1,6 +1,6 @@
 from ScoutSuite.providers.aws.resources.base import AWSResources
 from ScoutSuite.providers.aws.facade.base import AWSFacade
-from ScoutSuite.providers.aws.utils import get_name, get_keys, get_partition_name, format_arn
+from ScoutSuite.providers.aws.utils import get_name, get_keys, format_arn
 
 import re
 
@@ -10,7 +10,7 @@ class EC2Instances(AWSResources):
         super().__init__(facade)
         self.region = region
         self.vpc = vpc
-        self.partition = get_partition_name(facade.session)
+        self.partition = facade.partition
         self.service = 'ec2'
         self.resource_type = 'instance'
 
@@ -38,7 +38,7 @@ class EC2Instances(AWSResources):
         if "IamInstanceProfile" in raw_instance:
             instance['iam_instance_profile_id'] = raw_instance['IamInstanceProfile']['Id']
             instance['iam_instance_profile_arn'] = raw_instance['IamInstanceProfile']['Arn']
-        
+
         instance['network_interfaces'] = {}
         for eni in raw_instance['NetworkInterfaces']:
             nic = {}
@@ -62,9 +62,9 @@ class EC2Instances(AWSResources):
         secrets = {}
 
         if user_data:
-            aws_access_key_regex = re.compile('AKIA[0-9A-Z]{16}')
-            aws_secret_access_key_regex = re.compile('[0-9a-zA-Z/+]{40}')
-            rsa_private_key_regex = re.compile('(-----BEGIN RSA PRIVATE KEY-----(?s).+?-----END .+?-----)')
+            aws_access_key_regex = re.compile(r'(?:^|[^0-9A-Z])(AKIA[0-9A-Z]{16})(?:[^0-9A-Z]|$)')
+            aws_secret_access_key_regex = re.compile(r'(?:^|[^0-9a-zA-Z/+])([0-9a-zA-Z/+]{40})(?:[^0-9a-zA-Z/+]|$)')
+            rsa_private_key_regex = re.compile('(?s)(-----BEGIN RSA PRIVATE KEY-----.+?-----END .+?-----)')
             keywords = ['password', 'secret', 'aws_access_key_id', 'aws_secret_access_key', 'aws_session_token']
 
             aws_access_key_list = aws_access_key_regex.findall(user_data)

@@ -142,6 +142,12 @@
                 "level": "danger"
             }
         ],
+        "ec2-ebs-default-encryption-disabled.json": [
+            {
+                "enabled": true,
+                "level": "warning"
+            }
+        ],
         "ec2-instance-in-security-group.json": [
             {
                 "args": [
@@ -594,6 +600,12 @@
                 "level": "danger"
             }
         ],
+        "iam-lightspin-user-action-denied-for-group.json": [
+            {
+                "enabled": true,
+                "level": "danger"
+            }
+        ],
         "iam-managed-policy-allows-NotActions.json": [
             {
                 "enabled": true,
@@ -936,6 +948,12 @@
                 "level": "danger"
             }
         ],
+        "rds-instance-publicly-accessible.json": [
+            {
+                "enabled": true,
+                "level": "danger"
+            }
+        ],
         "rds-instance-short-backup-retention-period.json": [
             {
                 "enabled": true,
@@ -1223,13 +1241,6 @@
             },
             {
                 "args": [
-                    "Receive"
-                ],
-                "enabled": true,
-                "level": "danger"
-            },
-            {
-                "args": [
                     "AddPermission"
                 ],
                 "enabled": true,
@@ -1244,7 +1255,21 @@
             },
             {
                 "args": [
+                    "GetTopicAttributes"
+                ],
+                "enabled": true,
+                "level": "danger"
+            },
+            {
+                "args": [
                     "SetTopicAttributes"
+                ],
+                "enabled": true,
+                "level": "danger"
+            },
+            {
+                "args": [
+                    "ListSubscriptionsByTopic"
                 ],
                 "enabled": true,
                 "level": "danger"

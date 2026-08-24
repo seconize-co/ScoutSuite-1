@@ -24,7 +24,7 @@ class WebApplication(AzureResources):
         web_app_dict['location'] = raw_web_app.location
         web_app_dict['type'] = raw_web_app.type
         if raw_web_app.tags is not None:
-            web_app_dict['tags'] = ["{}:{}".format(key, value) for key, value in  raw_web_app.tags.items()]
+            web_app_dict['tags'] = ["{}:{}".format(key, value) for key, value in raw_web_app.tags.items()]
         else:
             web_app_dict['tags'] = []
         web_app_dict['resource_group_name'] = get_resource_group_name(raw_web_app.id)
@@ -72,6 +72,7 @@ class WebApplication(AzureResources):
             web_app_dict['minimum_tls_version_supported'] = raw_web_app.config.min_tls_version
             web_app_dict['http_2_enabled'] = raw_web_app.config.http20_enabled
             web_app_dict['http_logging_enabled'] = raw_web_app.config.http_logging_enabled
+            web_app_dict['ftp_deployment_enabled'] = raw_web_app.config.ftps_state == 'AllAllowed'
 
             if raw_web_app.config.linux_fx_version:
                 web_app_dict['programming_language'] = raw_web_app.config.linux_fx_version.split('|')[0].lower()

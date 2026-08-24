@@ -1,6 +1,6 @@
 from ScoutSuite.providers.aws.facade.base import AWSFacade
 from ScoutSuite.providers.aws.resources.base import AWSResources
-from ScoutSuite.providers.aws.utils import get_keys, get_partition_name, format_arn
+from ScoutSuite.providers.aws.utils import get_keys, format_arn
 from ScoutSuite.providers.utils import get_non_provider_id
 
 
@@ -9,7 +9,7 @@ class LoadBalancers(AWSResources):
         super().__init__(facade)
         self.region = region
         self.vpc = vpc
-        self.partition = get_partition_name(facade.session)
+        self.partition = facade.partition
         self.service = 'elb'
         self.resource_type = 'load-balancer'
 
@@ -31,9 +31,9 @@ class LoadBalancers(AWSResources):
             load_balancer['security_groups'].append({'GroupId': sg})
 
         load_balancer['listeners'] = {}
-        for l in raw_load_balancer['ListenerDescriptions']:
-            listener = l['Listener']
-            load_balancer['listeners'][l['Listener']
+        for listener_description in raw_load_balancer['ListenerDescriptions']:
+            listener = listener_description['Listener']
+            load_balancer['listeners'][listener_description['Listener']
                                        ['LoadBalancerPort']] = listener
 
         load_balancer['instances'] = []

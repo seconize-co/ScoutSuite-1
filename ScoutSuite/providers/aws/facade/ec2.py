@@ -3,7 +3,7 @@ import base64
 import boto3
 import zlib
 
-from ScoutSuite.core.console import print_exception
+from ScoutSuite.core.console import print_exception, print_warning
 from ScoutSuite.providers.aws.facade.basefacade import AWSBaseFacade
 from ScoutSuite.providers.aws.facade.utils import AWSFacadeUtils
 from ScoutSuite.providers.utils import get_and_set_concurrently
@@ -40,7 +40,7 @@ class EC2Facade(AWSBaseFacade):
     async def _decode_user_data(self, user_data):
         try:
             value = base64.b64decode(user_data)
-        except base64.binascii.Error as e:
+        except base64.binascii.Error:
             value = base64.b64decode(f'{user_data}===')
         if value[0:2] == b'\x1f\x8b':  # GZIP magic number
             return zlib.decompress(value, zlib.MAX_WBITS | 32).decode('utf-8')
@@ -127,7 +127,10 @@ class EC2Facade(AWSBaseFacade):
                 volume['KeyManager'] = await run_concurrently(
                     lambda: kms_client.describe_key(KeyId=key_id)['KeyMetadata']['KeyManager'])
             except Exception as e:
-                print_exception(f'Failed to describe KMS key: {e}')
+                if 'NotFoundException' in e:
+                    print_warning(f'Failed to describe KMS key: {e}')
+                else:
+                    print_exception(f'Failed to describe KMS key: {e}')
                 volume['KeyManager'] = None
         else:
             volume['KeyManager'] = None
@@ -153,8 +156,10 @@ class EC2Facade(AWSBaseFacade):
                 Attribute='createVolumePermission',
                 SnapshotId=snapshot['SnapshotId'])['CreateVolumePermissions'])
         except Exception as e:
-            print_exception(
-                f'Failed to describe EC2 snapshot attributes: {e}')
+            if 'NotFound' in e:
+                print_warning(f'Failed to describe EC2 snapshot attributes: {e}')
+            else:
+                print_exception(f'Failed to describe EC2 snapshot attributes: {e}')
 
     async def get_network_acls(self, region: str, vpc: str):
         filters = [{'Name': 'vpc-id', 'Values': [vpc]}]
@@ -214,3 +219,19 @@ class EC2Facade(AWSBaseFacade):
         except Exception as e:
             print_exception('Failed to get route tables: {}'.format(e))
             return []
+
+    async def get_ebs_encryption(self, region):
+        ec2_client = AWSFacadeUtils.get_client('ec2', self.session, region)
+        try:
+            encryption_settings = await run_concurrently(lambda: ec2_client.get_ebs_encryption_by_default())
+            return encryption_settings
+        except Exception as e:
+            print_exception(f'Failed to retrieve EBS encryption settings: {e}')
+
+    async def get_ebs_default_encryption_key(self, region):
+        ec2_client = AWSFacadeUtils.get_client('ec2', self.session, region)
+        try:
+            encryption_key = await run_concurrently(lambda: ec2_client.get_ebs_default_kms_key_id())
+            return encryption_key
+        except Exception as e:
+            print_exception(f'Failed to retrieve EBS encryption key ID: {e}')
