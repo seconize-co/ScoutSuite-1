@@ -1,4 +1,5 @@
 import boto3
+from botocore.config import Config
 from botocore.exceptions import ClientError
 
 from ScoutSuite.core.conditions import print_exception
@@ -7,6 +8,10 @@ from ScoutSuite.providers.utils import run_concurrently
 
 class AWSFacadeUtils:
     _clients = {}
+    # botocore's default (legacy, 4 retries) gave up on large accounts with "Rate exceeded"
+    # (CloudFormation GetStackPolicy, CodeBuild BatchGetProjects, ...), so those resources were missing from the
+    # report. Adaptive mode retries throttled calls up to 10 times and slows the client down while throttled.
+    _client_config = Config(retries={'max_attempts': 10, 'mode': 'adaptive'})
 
     @staticmethod
     async def get_all_pages(service: str, region: str, session: boto3.session.Session, paginator_name: str,
@@ -91,7 +96,8 @@ class AWSFacadeUtils:
         try:
             return AWSFacadeUtils._clients.setdefault(
                 (service, region),
-                session.client(service, region_name=region) if region else session.client(service))
+                session.client(service, region_name=region, config=AWSFacadeUtils._client_config) if region
+                else session.client(service, config=AWSFacadeUtils._client_config))
         except Exception as e:
             print_exception(f'Failed to create client for the {service} service: {e}')
             return None
